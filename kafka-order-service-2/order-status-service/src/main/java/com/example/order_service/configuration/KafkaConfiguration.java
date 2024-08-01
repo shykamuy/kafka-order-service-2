@@ -34,44 +34,46 @@ public class KafkaConfiguration {
     @Value("${app.kafka.kafkaOrderGroupId}")
     private String kafkaOrderGroupId;
 
+
+
     @Bean
-    public ProducerFactory<String, OrderEvent> kafkaProducerFactory(ObjectMapper objectMapper) {
+    public ProducerFactory<String, OrderStatusEvent> kafkaProducerFactory(ObjectMapper objectMapper) {
         Map<String, Object> config = new HashMap<>();
 
         config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
 /*        config.put(JsonSerializer.TYPE_MAPPINGS,
-                "order-topic:com.example.order_service.model.OrderEvent, order-topic:com.example.order_service.model.OrderEvent");*/
+                "order-topic:com.example.order_service.model.OrderStatusEvent, order-topic:com.example.order_service.model.OrderStatusEvent");*/
 
         return new DefaultKafkaProducerFactory<>(config, new StringSerializer(), new JsonSerializer<>(objectMapper));
     }
 
     @Bean
-    public KafkaTemplate<String, OrderEvent> kafkaTemplate(ProducerFactory<String, OrderEvent> kafkaOrderEventProducerFactory) {
-        return new KafkaTemplate<>(kafkaOrderEventProducerFactory);
+    public KafkaTemplate<String, OrderStatusEvent> kafkaTemplate(ProducerFactory<String, OrderStatusEvent> kafkaOrderStatusEventProducerFactory) {
+        return new KafkaTemplate<>(kafkaOrderStatusEventProducerFactory);
     }
 
 
+
+
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, OrderStatusEvent> kafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, OrderStatusEvent> factory = new ConcurrentKafkaListenerContainerFactory<>();
+    public ConcurrentKafkaListenerContainerFactory<String, OrderEvent> kafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, OrderEvent> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
         return factory;
     }
 
-    public ConsumerFactory<String, OrderStatusEvent> consumerFactory() {
+    public ConsumerFactory<String, OrderEvent> consumerFactory() {
         Map<String, Object> config = new HashMap<>();
 
         config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
         config.put(ConsumerConfig.GROUP_ID_CONFIG, kafkaOrderGroupId);
+        //config.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JsonDeserializer.class.getName());
+        //config.put(JsonDeserializer.VALUE_DEFAULT_TYPE, "com.example.order_service.model.OrderEvent");
         config.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
-        /*        config.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JsonDeserializer.class.getName());
-        config.put(JsonDeserializer.VALUE_DEFAULT_TYPE, "com.example.order_service.model.OrderStatusEvent");*/
-/*        config.put(JsonDeserializer.TYPE_MAPPINGS,
-                "order-topic:com.example.order_service.model.OrderStatusEvent, order-topic:com.example.order_service.model.OrderStatusEvent");*/
 
         return new DefaultKafkaConsumerFactory<>(config);
     }
